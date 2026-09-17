@@ -36,7 +36,7 @@ $cfg = @"
     "ClientId": "$($clientApp.AppID)",
     "ClientSecret": "",
     "AcceptedAuds": [
-      "$($expApp.AppID)"
+      "$($extApp.AppID)"
     ],
     "AcceptedSigninAppIDs": [
       "$($clientApp.AppID)"

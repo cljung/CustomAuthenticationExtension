@@ -14,7 +14,9 @@ Connect-MgGraph -tenantId $tenantId -NoWelcome -Scopes "User.ReadWrite.All"
 $ciamHostname = "cljungciamdevse"
 $userEmail = "johndoe@live.com"
 $displayName = "John Doe"
-$extAttribute_toBeMigrated = ""
+
+$b2cExt = Get-MgApplication -Filter "startswith(displayName, 'b2c-extension')"
+$extAttribute_toBeMigrated = "extension_"+$b2cExt.appId.Replace("-","")+"_toBeMigrated"
 
 $userProfile = @"
 {
@@ -38,6 +40,7 @@ $userProfile = @"
 }
 "@
 
-Invoke-MgGraphRequest -Method POST -Uri "https://graph.microsoft.com/v1.0/users" -Body $userProfile
+$userProfile 
+Invoke-MgGraphRequest -Method POST -Uri "https://graph.microsoft.com/v1.0/users" -Body $userProfile -ContentType "application/json" -Verbose
 
 
