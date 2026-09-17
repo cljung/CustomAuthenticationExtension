@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "identityapp1": {
+      "connectionInfo": "App registration: TAP-onboard-user-app, Tenant: fawltytowers2 (fawltytowers2.com - Microsoft Entra ID)",
+      "type": "identityapp.default"
+    }
+  }
+}
