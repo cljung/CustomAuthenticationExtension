@@ -23,5 +23,6 @@ $customExtensionAppName = $CustomExtensionAppName
 $TokenIssaunceExtName = "onTokenIssaunce"
 
 $apiEndpointPasswordMigration = "https://$apiHostingDomain/api/authenticationevent/passwordmigration"
+$apiEndpointTokenIssuance = "https://$apiHostingDomain/api/authenticationevent/tokenIssuanceStart"
 $certFullPath = "set full path of downloaded/JitMigrationEncryptionCert_some-number.cer"
 $keyCredentialsName = "CN=JitMigration"

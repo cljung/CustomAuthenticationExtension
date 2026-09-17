@@ -55,7 +55,7 @@ if ( ($authExt.value | where {$_.'@odata.type' -eq "#microsoft.graph.onTokenIssu
         "displayName"                 = "$TokenIssaunceExtName"
         "endpointConfiguration"       = [ordered]@{
             "@odata.type" = "#microsoft.graph.httpRequestEndpoint"
-            "targetUrl"   = "https://$apiHostingDomain/vsdbg/api/authenticationevent/tokenIssuanceStart"
+            "targetUrl"   = "$apiEndpointTokenIssuance"
         }
         "description"                 = $null
     }
