@@ -14,9 +14,10 @@ var builder = WebApplication.CreateBuilder(args);
 ILogger<Program>? logger = null;
 
 // pre-load the certificate from KeyVault and do it here as we use it for TokenDecryptionKey below
+#if PASSWORDMIGRATION
 var kvh = new KeyVaultHelper( builder.Configuration );
 kvh.LoadCertificateFromKeyVault();
-
+#endif
 builder.Services.Configure<ForwardedHeadersOptions>(options => {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
 });
@@ -38,10 +39,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 ValidateLifetime = true,
                 RequireExpirationTime = true,
                 AudienceValidator = CustomAudienceValidator,
+#if PASSWORDMIGRATION
                 // Once you add password migration and configure tokenEncryptionId in the app manifest
                 // you will get an encrypted access token. In fact, it's not a JWT but a JWE.
                 // We need to add the cert here so the aspnet middleware can decrypt it 
                 TokenDecryptionKey = new X509SecurityKey(KeyVaultHelper.Certificate)
+#endif
             };
         }, 
         identityOptions => {

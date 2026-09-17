@@ -181,7 +181,11 @@ public class ApiController : Controller {
     [ProducesResponseType(typeof(AuthenticationEventResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> PasswordMigration([FromBody] AuthenticationEventRequest? request) {
+#if PASSWORDMIGRATION
         return await AuthenticationEventHandler(request);
+#else
+        return ReturnErrorMessage("Password Migration not supported");
+#endif
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

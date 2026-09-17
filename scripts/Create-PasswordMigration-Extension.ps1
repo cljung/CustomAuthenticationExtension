@@ -8,7 +8,6 @@ Connect-MgGraph -TenantId $tenantId -NoWelcome -Scopes "Directory.ReadWrite.All,
 function Write-Section( $message ) {
     write-Host "################################################################################################################################" -ForegroundColor DarkGray
     write-Host "# $message" -ForegroundColor DarkGray
-#    write-Host "################################################################################################################################" -ForegroundColor DarkGray
 }
 
 Write-Section "Check $clientAppName exists"
@@ -27,7 +26,7 @@ $extApp = Get-MgApplication -Filter "displayName eq '$customExtensionAppName'"
 if ( $null -ne $extApp ) {
     write-host "AppID $($clientApp.AppId)" -ForegroundColor Green
 } else {
-    write-error "The custom extension app $customExtensionAppName is not registered. run Create-CustomAuthExtension-app.ps1 script first"
+    write-error "The custom extension app $customExtensionAppName is not registered. run Create-CustomAuthExtension.ps1 script first"
     exit
 }
 $identifierUriExpected = "api://$apiHostingDomain/$($extApp.AppId)"
