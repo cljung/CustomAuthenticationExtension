@@ -46,3 +46,30 @@ $userProfile
 Invoke-MgGraphRequest -Method POST -Uri "https://graph.microsoft.com/v1.0/users" -Body $userProfile -ContentType "application/json" -Verbose
 
 
+<#
+# Pre-creating a federated gmail User. The first time a user signs in with the gmail account, Entra will redirect to Google Identity
+# where the user authenticates. Then the Entra user will be linked to the gmail account
+
+$userEmail = "johndoe@gmail.com"
+$displayName = "John Doe (gmail)"
+
+
+$userProfileGMail = @"
+{
+    "accountEnabled": true,
+    "displayName": "$displayName",
+    "mail": "$userEmail",
+    "otherMails": [ "$userEmail" ],
+    "identities": [
+        {
+            "signInType": "federated",
+            "issuer": "google.com",
+            "issuerAssignedId": "$userEmail"
+        }
+    ]
+}
+"@
+
+Invoke-MgGraphRequest -Method POST -Uri "https://graph.microsoft.com/v1.0/users" -Body $userProfileGMail -ContentType "application/json" -Verbose
+
+#>
