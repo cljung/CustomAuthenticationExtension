@@ -111,6 +111,15 @@ public class ApiController : Controller {
         SetResponseHeaderValue( "x-Domain", _configuration["Entra:Domain"]!.ToString());
         SetResponseHeaderValue( "x-RemoteIpAddress", GetRemoteIpAddress() );
         SetResponseHeaderValue( "x-RequestHostName", GetRequestHostName() );
+        List<string> acceptedAuds = _configuration.GetSection("Entra:AcceptedAuds").Get<List<string>>() ?? new List<string>();
+        SetResponseHeaderValue("x-AcceptedAuds", string.Join(",", acceptedAuds));
+        List<string> acceptedSigninAppIDs = _configuration.GetSection("Entra:AcceptedSigninAppIDs").Get<List<string>>() ?? new List<string>();        
+        SetResponseHeaderValue("x-AcceptedSigninAppIDs", string.Join(",", acceptedSigninAppIDs));
+        if ( null != KeyVaultHelper.Certificate ) {
+            SetResponseHeaderValue("x-CertSubject", KeyVaultHelper.Certificate!.Subject);
+            SetResponseHeaderValue("x-CertThumbprint", KeyVaultHelper.Certificate!.Thumbprint);
+            SetResponseHeaderValue("x-CertNotAfter", KeyVaultHelper.Certificate!.NotAfter.ToUniversalTime().ToString("O") );
+        }
         return new ContentResult { ContentType = "text/plain", Content = "pong - " + DateTime.UtcNow.ToString() };
     }
 
@@ -181,11 +190,11 @@ public class ApiController : Controller {
     [ProducesResponseType(typeof(AuthenticationEventResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> PasswordMigration([FromBody] AuthenticationEventRequest? request) {
-#if PASSWORDMIGRATION
-        return await AuthenticationEventHandler(request);
-#else
-        return ReturnErrorMessage("Password Migration not supported");
-#endif
+        if ( null != KeyVaultHelper.Certificate) {
+            return await AuthenticationEventHandler(request);
+        } else {
+            return ReturnErrorMessage("Password Migration not supported");
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

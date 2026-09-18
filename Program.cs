@@ -13,11 +13,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 ILogger<Program>? logger = null;
 
-// pre-load the certificate from KeyVault and do it here as we use it for TokenDecryptionKey below
-#if PASSWORDMIGRATION
-var kvh = new KeyVaultHelper( builder.Configuration );
-kvh.LoadCertificateFromKeyVault();
-#endif
 builder.Services.Configure<ForwardedHeadersOptions>(options => {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
 });
@@ -29,23 +24,20 @@ string instance = GetConfigValue("Entra:Instance")!.Replace( "{tenantId}", tenan
 string domain = GetConfigValue("Entra:Domain", tenantId)!;
 string clientId = GetConfigValue("Entra:ClientID")!;
 
+// create variable here so we can modify it further down if we should use TokenDecryption and support JWE tokens
+TokenValidationParameters tokenValidationParams = new TokenValidationParameters() {
+    ValidateIssuerSigningKey = true,
+    ValidateIssuer = true,
+    ValidIssuer = $"{instance}{tenantId}/v2.0",
+    ValidateLifetime = true,
+    RequireExpirationTime = true,
+    AudienceValidator = CustomAudienceValidator
+};
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApi(
         jwtOptions => {
-            jwtOptions.TokenValidationParameters = new TokenValidationParameters() {
-                ValidateIssuerSigningKey = true,
-                ValidateIssuer = true,
-                ValidIssuer = $"{instance}{tenantId}/v2.0",
-                ValidateLifetime = true,
-                RequireExpirationTime = true,
-                AudienceValidator = CustomAudienceValidator,
-#if PASSWORDMIGRATION
-                // Once you add password migration and configure tokenEncryptionId in the app manifest
-                // you will get an encrypted access token. In fact, it's not a JWT but a JWE.
-                // We need to add the cert here so the aspnet middleware can decrypt it 
-                TokenDecryptionKey = new X509SecurityKey(KeyVaultHelper.Certificate)
-#endif
-            };
+            jwtOptions.TokenValidationParameters = tokenValidationParams;
         }, 
         identityOptions => {
             identityOptions.Domain = domain;
@@ -72,8 +64,7 @@ builder.Services.AddSingleton<IAuth0Helper, Auth0Helper>();         // handles r
 builder.Services.AddSingleton<IGraphMail, GraphMail>();             // handles sending OTP via email
 builder.Services.AddSingleton<ITwilioHelper, TwilioHelper>();       // handles senting OTP via SMS
 
-bool appInsightsEnabled = builder.Configuration.GetValue<bool>("ApplicationInsights:Enabled", false);
-if ( appInsightsEnabled ) {
+if (GetConfigBool("ApplicationInsights:Enabled", false)) {
     builder.Services.AddApplicationInsightsTelemetry();
     builder.Services.AddLogging( logBuilder => logBuilder.AddApplicationInsights().AddFilter<ApplicationInsightsLoggerProvider>( "", LogLevel.Trace ) );
 }
@@ -87,6 +78,18 @@ var cache = app.Services.GetRequiredService<IMemoryCache>();
 logger.LogInformation( $"*** Configuration ***\n" 
         + $"TenantId: {tenantId}\nDomain: {domain}\nInstance: {instance}\nClientID: {clientId}\n" 
         + $"Accepted aud(s): {string.Join(",", acceptedAuds)}\nAccepted Signin AppIDs: {string.Join(",", acceptedSigninAppIDs)}" );
+
+if (GetConfigBool("KeyVault:Enabled", false)) {
+    var kvh = new KeyVaultHelper(builder.Configuration, app.Services.GetRequiredService<ILogger<IKeyVaultHelper>>());
+    kvh.LoadCertificateFromKeyVault();
+    // Once you add password migration and configure tokenEncryptionId in the app manifest
+    // you will get an encrypted access token. In fact, it's not a JWT but a JWE.
+    // We need to add the cert here so the aspnet middleware can decrypt it 
+    if (null != KeyVaultHelper.Certificate) {
+        tokenValidationParams.TokenDecryptionKey = new X509SecurityKey(KeyVaultHelper.Certificate);
+        logger!.LogTrace($"TokenDecriptionKey set to certificate. JWE encrypted tokens supported");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) {

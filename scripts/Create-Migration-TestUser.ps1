@@ -11,7 +11,9 @@ Connect-MgGraph -tenantId $tenantId -NoWelcome -Scopes "User.ReadWrite.All"
 # Create the Custome Authentication Extension app registrations  
 ################################################################################################################################
 
-$ciamHostname = "cljungciamdevse"
+$currentContext = Get-MgContext
+$ciamDomain = $currentContext.Account.Split("@")[1]
+
 $userEmail = "johndoe@live.com"
 $displayName = "John Doe"
 
@@ -33,7 +35,7 @@ $userProfile = @"
     "identities": [
         {
             "signInType": "emailAddress",
-            "issuer": "$ciamHostname.onmicrosoft.com",
+            "issuer": "$ciamDomain",
             "issuerAssignedId": "$userEmail"
         }
     ]

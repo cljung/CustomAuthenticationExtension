@@ -6,13 +6,17 @@ param (
     [Parameter(Mandatory = $true)][string]$ApiHostingDomain # FQDN of where you are hosting your API
 )
 
-$name = "Microsoft.Graph"
-if (-not (Get-Module -Name $name)) {
-    Write-Host "Module not found in session. Importing $name..." -ForegroundColor Cyan
-    Import-Module -Name $name
-} else {
-    Write-Host "$nameAuthentication is already imported." -ForegroundColor Green
+function ImportModule($name) {
+    if (-not (Get-Module -Name $name)) {
+        Write-Host "Module not found in session. Importing $name..." -ForegroundColor Cyan
+        Import-Module -Name $name
+    } else {
+        Write-Host "$nameAuthentication is already imported." -ForegroundColor Green
+    }
 }
+ImportModule "Microsoft.Graph.Applications"
+ImportModule "Microsoft.Graph.Users"
+ImportModule "Microsoft.Graph.Identity.SignIns"
 ################################################################################################################################
 # Variables
 ################################################################################################################################
